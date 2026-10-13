@@ -48,6 +48,28 @@ export function resolveMarkdownLinkPathname(
     return sourceToPermalink.get(decodeURIComponent(linkPathname)) ?? null;
   }
 
+  // The current file dir, then the equivalent dir in the other content path
+  // A file and the file it links to can live in distinct content paths when
+  // the localized content is only partially translated, see #10907
+  function getSourceFileDirs() {
+    const sourceFileDir = path.dirname(sourceFilePath);
+    const contentPathList = getContentPathList(contentPaths);
+    const sourceContentPath = contentPathList.find((contentPath) => {
+      const relativeDir = path.relative(contentPath, sourceFileDir);
+      return !relativeDir.startsWith('..') && !path.isAbsolute(relativeDir);
+    });
+    if (!sourceContentPath) {
+      return [sourceFileDir];
+    }
+    const relativeDir = path.relative(sourceContentPath, sourceFileDir);
+    return [
+      sourceFileDir,
+      ...contentPathList
+        .filter((contentPath) => contentPath !== sourceContentPath)
+        .map((contentPath) => path.join(contentPath, relativeDir)),
+    ];
+  }
+
   // Get the dirs to "look into", ordered by priority, when resolving the link
   function getSourceDirsToTry() {
     // /file.md is always resolved from
@@ -57,17 +79,19 @@ export function resolveMarkdownLinkPathname(
       return [...getContentPathList(contentPaths), siteDir];
     }
     // ./file.md and ../file.md are always resolved from
-    // - the current file dir
+    // - the current file dir,
+    // - then the equivalent dir in the other content path
     else if (linkPathname.startsWith('./') || linkPathname.startsWith('../')) {
-      return [path.dirname(sourceFilePath)];
+      return getSourceFileDirs();
     }
     // file.md is resolved from
     // - the current file dir,
+    // - then the equivalent dir in the other content path,
     // - then from the plugin content paths,
     // - then siteDir
     else {
       return [
-        path.dirname(sourceFilePath),
+        ...getSourceFileDirs(),
         ...getContentPathList(contentPaths),
         siteDir,
       ];
