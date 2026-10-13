@@ -438,6 +438,54 @@ Lorem Ipsum
     });
   });
 
+  it('parses markdown h1 title at the top (atx style with multiple closing #)', () => {
+    const markdown = `# Markdown Title ###\n\nLorem Ipsum`;
+    expect(parseMarkdownContentTitle(markdown)).toEqual({
+      content: markdown,
+      contentTitle: 'Markdown Title',
+    });
+  });
+
+  it('parses markdown h1 title made of closing # only as empty', () => {
+    const markdown = `# #\n\nLorem Ipsum`;
+    expect(parseMarkdownContentTitle(markdown)).toEqual({
+      content: markdown,
+      contentTitle: '',
+    });
+  });
+
+  it('parses markdown h1 title ending with hash in text (e.g. C#)', () => {
+    const markdown = `# Learn C#\n\nLorem Ipsum`;
+    expect(parseMarkdownContentTitle(markdown)).toEqual({
+      content: markdown,
+      contentTitle: 'Learn C#',
+    });
+  });
+
+  it('parses markdown h1 title ending with hash in text (e.g. F#)', () => {
+    const markdown = `# F#\n\nLorem Ipsum`;
+    expect(parseMarkdownContentTitle(markdown)).toEqual({
+      content: markdown,
+      contentTitle: 'F#',
+    });
+  });
+
+  it('parses markdown h1 title ending with hash in text and closing #', () => {
+    const markdown = `# Learn C# #\n\nLorem Ipsum`;
+    expect(parseMarkdownContentTitle(markdown)).toEqual({
+      content: markdown,
+      contentTitle: 'Learn C#',
+    });
+  });
+
+  it('parses markdown h1 title ending with hash in text and fixed anchor-id syntax', () => {
+    const markdown = `# C# {#my-anchor-id}\n\nLorem Ipsum`;
+    expect(parseMarkdownContentTitle(markdown)).toEqual({
+      content: markdown,
+      contentTitle: 'C#',
+    });
+  });
+
   it('parses markdown h1 title at the top followed by h2 title', () => {
     const markdown = dedent`
 
